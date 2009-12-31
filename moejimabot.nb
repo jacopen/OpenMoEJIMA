@@ -7,20 +7,20 @@
 # (BotClassName.downcase == bot_file_name)
 
 class MoEJimaBot < Nadoka::NDK_Bot
-  def version
-    return "OpenMoEJIMA version 0.31 Dec 11,2009"
-  end
-  
+  def bot_initialize
+    @twitter = Twit.new
+  end 
+
   def set_tasks
     @tasks = {
       ".*もえじま.*なると.*" => "send_privmsg(@ch, '|-`)つ＠'.tojis);change_mode(@ch, '+o', @prefix.nick)",
       ".*もえじまー.*" => "send_privmsg(@ch, '|-`) なんだい'.tojis)",
       ".*もえじまきたー.*" => "send_privmsg(@ch, '|-`) キタヨー'.tojis)",
       "^(やらないか)|(もえじま.*やらないか)" => "send_privmsg(@ch, 'アッー！'.tojis)",
-      ".*もえじま.*(ついったー|twitter)\s(.*)" => "get_twitter_base.update('|-`) ' + $2);post('ついったった。[|-`) ' + $2.toutf8 + ']')",
+      ".*もえじま.*(ついったー|twitter)\s(.*)" =>  "@twitter.base.update('|-`) ' + $2);post('ついったった。[|-`) ' + $2.toutf8 + ']')",
       ".*まえじま.*" => "send_privmsg(@ch, '|-`) 呼んだ？'.tojis) if rand(20) == 1",
       ".*前島.*" => "send_privmsg(@ch, '|-`) 呼んだ？'.tojis)if rand(20) == 1",
-      ".*もえじま.*バージョン.*" => "post(version)",
+      ".*もえじま.*バージョン.*" => "send_privmsg(@ch, 'MoEJima Bot version 0.21 Nov 13,2009'.tojis)",
       ".*もえじま.*時間.*" => "send_privmsg(@ch, Time.now.to_s)",
       ".*もえじま.*時刻合わせ.*" => "`ntpdate ntp.nict.jp`;post('|-`) なおした')",
       "^(?=.*やぎ)(?=.*この時間).{6,}$" => "post('|-`) クビか･･･')",
@@ -38,12 +38,14 @@ class MoEJimaBot < Nadoka::NDK_Bot
       "http://www.nicovideo.jp/watch/(.{2,11})" => "check_nicovideo($1)",
       "ぷおー" => "post('|-`) ぷおー')",
       "こぽー" => "post('|-`) こぽー')",
-      ".*アステルバーム.*" => "post('|-`) もしかして：アスパルテーム')"
+      ".*アステルバーム.*" => "post('|-`) もしかして：アスパルテーム')",
+      "もえじま、ブックマーク登録(.*)" => "write_bookmark($1)",
+      "もえじま、ブックマーク一覧" => "show_bookmark"
  }
   end
 
   # 発言があったときイベント
-  def on_privmsg prefix, ch, msg
+  def on_privmsg(prefix, ch, msg)
     @mode = 'loud' if !@mode
     set_tasks
     @prefix, @ch, @msg = prefix, ch, msg.toutf8
@@ -56,19 +58,18 @@ class MoEJimaBot < Nadoka::NDK_Bot
     #対前島汎用兵器
     if /.*hisu.*/ =~ prefix.nick
       if /.*なるとくれ.*/ =~ @msg
-	send_privmsg(@ch, '|-`)・・・'.tojis)
-	sleep 2
-	change_mode(@ch, '-o', @prefix.nick)
+	      send_privmsg(@ch, '|-`)・・・'.tojis)
+	      sleep 2
+	      change_mode(@ch, '-o', @prefix.nick)
       end
     end
   end
 
   #定期イベント
-  def on_timer t
+  def on_timer(t)
     daily t
     hourly t
     every_minutes t
-    
   end
 
   def daily(t)
@@ -94,7 +95,7 @@ class MoEJimaBot < Nadoka::NDK_Bot
   end
 
   #誰かがジョインしたとき
-  def on_join prefix, ch
+  def on_join(prefix, ch)
     if rand(10) == 1
       post("|-`) #{prefix.nick}があらわれた！")
     end
@@ -108,21 +109,21 @@ class MoEJimaBot < Nadoka::NDK_Bot
     return array[rand(array.size)]
   end
 
-  def on_quit_from_channel ch, nick, qmsg
+  def on_quit_from_channel(ch, nick, qmsg)
   end
   
   def get_replies
     @ids = []
-    get_twitter_base.replies.each do |reply|
+    @twitter.base.mentions.each do |reply|
       post_replies reply
       @ids << reply.id
     end
   end
 
-  def post_replies reply
-      if reply.id.to_i > get_last_id
-        post_notice(reply.text + "   from @" + reply.user.screen_name)
-      end
+  def post_replies(reply)
+    if reply.id.to_i > get_last_id
+      post_notice(reply.text + "   from @" + reply.user.screen_name)
+    end
   end
 
   def get_last_id
@@ -131,33 +132,18 @@ class MoEJimaBot < Nadoka::NDK_Bot
     end
   end
 
-  def set_last_id id
+  def set_last_id(id)
     open('last_update.txt', 'w+') do |f|
       f.write id
     end
   end
 
-  def post msg
+  def post(msg)
     send_privmsg(@ch, msg.tojis)
   end
 
-  def post_notice msg
+  def post_notice(msg)
     send_notice @ch, msg.tojis
-  end
-
-  
-  def create_httpauth
-    @httpauth = Twitter::HTTPAuth.new('moejima', 'password') 
-  end
-
-  def create_twitter_base
-    @base = Twitter::Base.new(@httpauth)
-  end
-
-  def get_twitter_base
-    create_httpauth
-    create_twitter_base
-    return @base
   end
   
   def set_flag(mode)
@@ -172,5 +158,36 @@ class MoEJimaBot < Nadoka::NDK_Bot
 
     post_notice doc.elements['/nicovideo_thumb_response/thumb/title'].text
   end
-end
 
+  def write_bookmark(str)
+    open("bookmark.txt", "a") do |f|
+      f.write(str)
+      f.write("\n")
+    end
+  end
+
+  def show_bookmark
+    open("bookmark.txt", "r") do |f|
+      enumerator = f.lines
+      enumerator.each do |line|
+        post_notice(line)
+      end
+    end
+  end
+
+  class Twit
+    attr_accessor :base
+    def initialize
+      create_httpauth
+      create_twitter_base
+    end
+    def create_httpauth
+      yml = YAML.load_file("twitter_config.yml")
+      @httpauth = Twitter::HTTPAuth.new(yml["id"], yml["password"]) 
+    end
+ 
+    def create_twitter_base
+      @base = Twitter::Base.new(@httpauth)
+    end
+  end
+end
