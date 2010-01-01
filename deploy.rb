@@ -8,10 +8,10 @@ end
 def main
   Dir::chdir($git_moejimabot_dir)
   result_exec_git=`git pull`
-  if /Already up-to-date/=~result_exec_git
+  unless /Already up-to-date/=~result_exec_git
     `cp -R #{$git_moejimabot_dir}/moejimabot.nb #{$nadoka_dir}/plugins/`
+    nadoka_reboot
   end
-  nadoka_reboot
 end
 
 def nadoka_reboot
