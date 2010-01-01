@@ -17,10 +17,11 @@ def flg_nadoka_git_pull
   Dir::chdir($config[:git_moejimabot_dir])
   result_exec_git=`git pull`
   if /Already up-to-date/=~result_exec_git
+    `cp -R #{$config[:git_moejimabot_dir]}/moejimabot.nb #{$config[:nadoka_dir]}/plugins/`
     return false
   else
     `cp -R #{$config[:git_moejimabot_dir]}/moejimabot.nb #{$config[:nadoka_dir]}/plugins/`
-    return true 
+    return true
   end
 end
 
@@ -46,7 +47,7 @@ end
 
 def nadoka_start
   Dir::chdir($config[:nadoka_dir])
-  Thread.new do 
+  Thread.new do
     `ruby  #{$config[:nadoka_dir]}/nadoka.rb --r #{$config[:nadoka_dir]}/nadoka_config_main`
   end
 end

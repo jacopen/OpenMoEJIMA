@@ -1,6 +1,6 @@
 # -*-ruby-*-
 #
-#	Ma E Jima Bot
+# Ma E Jima Bot
 #
 
 # bot_file_name and BotClassName must be same name
@@ -17,19 +17,21 @@ require 'rexml/document'
 class MoEJimaBot < Nadoka::NDK_Bot
   def bot_initialize
     @twitter = Twit.new
-  end 
+    @outenc = Kconv::UTF8
+  end
 
   def set_tasks
     @tasks = {
-      ".*もえじま.*なると.*" => "send_privmsg(@ch, '|-`)つ＠'.tojis);change_mode(@ch, '+o', @prefix.nick)",
-      ".*もえじまー.*" => "send_privmsg(@ch, '|-`) なんだい'.tojis)",
-      ".*もえじまきたー.*" => "send_privmsg(@ch, '|-`) キタヨー'.tojis)",
-      "^(やらないか)|(もえじま.*やらないか)" => "send_privmsg(@ch, 'アッー！'.tojis)",
-      ".*もえじま.*(ついったー|twitter)\s(.*)" =>  "@twitter.base.update('|-`) ' + $2);post('ついったった。[|-`) ' + $2.toutf8 + ']')",
-      ".*まえじま.*" => "send_privmsg(@ch, '|-`) 呼んだ？'.tojis) if rand(20) == 1",
-      ".*前島.*" => "send_privmsg(@ch, '|-`) 呼んだ？'.tojis)if rand(20) == 1",
-      ".*もえじま.*バージョン.*" => "send_privmsg(@ch, 'MoEJima Bot version 0.21 Nov 13,2009'.tojis)",
-      ".*もえじま.*時間.*" => "send_privmsg(@ch, Time.now.to_s)",
+      ".*moemoe.*" => "post('てすと')",
+      ".*もえじま.*なると.*" => "post('|-`)つ＠'.toutf8);change_mode(@ch, '+o', @prefix.nick)",
+      ".*もえじまー.*" => "post('|-`) なんだい')",
+      ".*もえじまきたー.*" => "post('|-`) キタヨー')",
+      "^(やらないか)|(もえじま.*やらないか)" => "post('アッー！')",
+      ".*もえじま.*(ついったー|twitter)\s(.*)" =>  "@twitter.base.update('|-`) ' + $2);post('ついったった。[|-`) ' + $2 + ']')",
+      ".*まえじま.*" => "post('|-`) 呼んだ？') if rand(20) == 1",
+      ".*前島.*" => "post('|-`) 呼んだ？') if rand(20) == 1",
+      ".*もえじま.*バージョン.*" => "post('MoEJima Bot version 0.30 01/01/2010')",
+      ".*もえじま.*時間.*" => "post(Time.now.to_s)",
       ".*もえじま.*時刻合わせ.*" => "`ntpdate ntp.nict.jp`;post('|-`) なおした')",
       "^(?=.*やぎ)(?=.*この時間).{6,}$" => "post('|-`) クビか･･･')",
       ".*もえじま.*コマンド" => "@tasks.each do |key, value| post_notice(key) end",
@@ -49,26 +51,25 @@ class MoEJimaBot < Nadoka::NDK_Bot
       ".*アステルバーム.*" => "post('|-`) もしかして：アスパルテーム')",
       "もえじま、ブックマーク登録(.*)" => "write_bookmark($1)",
       "もえじま、ブックマーク一覧" => "show_bookmark"
- }
+    }
   end
 
   # 発言があったときイベント
   def on_privmsg(prefix, ch, msg)
     @mode = 'loud' if !@mode
     set_tasks
-    @prefix, @ch, @msg = prefix, ch, msg.toutf8
+    @prefix, @ch, @msg = prefix, ch, msg
     #tasks実行
     @tasks.each do |key, value|
       if Regexp.new(key) =~ @msg
         eval(value)
       end
-    end 
+    end
     #対前島汎用兵器
     if /.*hisu.*/ =~ prefix.nick
       if /.*なるとくれ.*/ =~ @msg
-	      send_privmsg(@ch, '|-`)・・・'.tojis)
-	      sleep 2
-	      change_mode(@ch, '-o', @prefix.nick)
+         post('|-`)・・・')
+         change_mode(@ch, '-o', @prefix.nick)
       end
     end
   end
@@ -93,7 +94,7 @@ class MoEJimaBot < Nadoka::NDK_Bot
           @ch = ch
           post(get_alerm_string.gsub("{t.hour}", t.hour.to_s))
         }
-      end  
+      end
     end
   end
 
@@ -119,7 +120,7 @@ class MoEJimaBot < Nadoka::NDK_Bot
 
   def on_quit_from_channel(ch, nick, qmsg)
   end
-  
+
   def get_replies
     @ids = []
     @twitter.base.mentions.each do |reply|
@@ -147,15 +148,17 @@ class MoEJimaBot < Nadoka::NDK_Bot
   end
 
   def post(msg)
-    send_privmsg(@ch, msg.tojis)
+    send_privmsg(@ch,msg.kconv(@outenc))
+    sleep 1
   end
 
   def post_notice(msg)
-    send_notice @ch, msg.tojis
+    send_notice(@ch, msg.kconv(@outenc))
+    sleep 1
   end
-  
+
   def set_flag(mode)
-    @mode = mode 
+    @mode = mode
   end
 
   def check_nicovideo(number)
@@ -193,7 +196,6 @@ class MoEJimaBot < Nadoka::NDK_Bot
       yml = YAML.load_file("twitter_config.yml")
       @httpauth = Twitter::HTTPAuth.new(yml["id"], yml["password"]) 
     end
- 
     def create_twitter_base
       @base = Twitter::Base.new(@httpauth)
     end
