@@ -4,7 +4,7 @@ require 'yaml'
 require 'pp'
 
 def configure
-  $config = YAML.load_file 'deploy.yaml'
+  $config = YAML.load_file '/usr/local/nadoka/deploy.yaml'
 end
 
 def main
@@ -18,9 +18,11 @@ def flg_nadoka_git_pull
   result_exec_git=`git pull`
   if /Already up-to-date/=~result_exec_git
     `cp -R #{$config[:git_moejimabot_dir]}/moejimabot.nb #{$config[:nadoka_dir]}/plugins/`
+    `cp -R #{$config[:git_moejimabot_dir]}/deploy.yaml #{$config[:nadoka_dir]}/`
     return false
   else
     `cp -R #{$config[:git_moejimabot_dir]}/moejimabot.nb #{$config[:nadoka_dir]}/plugins/`
+    `cp -R #{$config[:git_moejimabot_dir]}/deploy.yaml #{$config[:nadoka_dir]}/`
     return true
   end
 end
