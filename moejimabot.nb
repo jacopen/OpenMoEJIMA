@@ -18,6 +18,7 @@ class MoEJimaBot < Nadoka::NDK_Bot
   def bot_initialize
     @twitter = Twit.new
     @outenc = Kconv::UTF8
+    set_tasks
   end
 
   def set_tasks
@@ -58,7 +59,6 @@ class MoEJimaBot < Nadoka::NDK_Bot
     msg = msg.toutf8
 
     @mode = 'loud' if !@mode
-    set_tasks
     @prefix, @ch, @msg = prefix, ch, msg
     #tasks実行
     @tasks.each do |key, value|
