@@ -22,7 +22,6 @@ class MoEJimaBot < Nadoka::NDK_Bot
 
   def set_tasks
     @tasks = {
-      ".*moemoe.*" => "post('てすと')",
       ".*もえじま.*なると.*" => "post('|-`)つ＠'.toutf8);change_mode(@ch, '+o', @prefix.nick)",
       ".*もえじまー.*" => "post('|-`) なんだい')",
       ".*もえじまきたー.*" => "post('|-`) キタヨー')",
