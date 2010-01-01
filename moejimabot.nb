@@ -5,6 +5,14 @@
 
 # bot_file_name and BotClassName must be same name
 # (BotClassName.downcase == bot_file_name)
+require 'rubygems'
+require 'optparse'
+require 'kconv'
+require 'ndk/server'
+require 'ndk/bot'
+require 'twitter'
+require 'open-uri'
+require 'rexml/document'
 
 class MoEJimaBot < Nadoka::NDK_Bot
   def bot_initialize

@@ -2,9 +2,8 @@
 
 def configure
   $nadoka_dir='/usr/local/nadoka'
-  $git_moejimabot_dir='/home/u1/git/OpenMoEJIMA'
+  $git_moejimabot_dir='/home/udcp/git/OpenMoEJIMA'
 end
-
 
 def main
   Dir::chdir($git_moejimabot_dir)
